@@ -37,7 +37,8 @@ As of this update, the following have been archived with detailed summaries and 
 
 **Final Rounds**
 - Two detailed responses from Opus 4.7 (default + master prompt)
-- Kimi 2.5 (master prompt) — full response
+- Kimi 2.5 (master prompt) — previous full response
+- Kimi 2.5 (master prompt) — **latest** full response (most recent)
 
 **Head-to-Head**
 - Full debate package between Opus 4.7 and Kimi 2.5 (also available in the `head-to-head/` folder at repo root)
