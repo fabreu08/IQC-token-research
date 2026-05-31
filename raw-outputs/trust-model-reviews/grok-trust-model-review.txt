@@ -1,0 +1,50 @@
+[AGREE]
+01,02,03,04,05,07,08
+
+[DISAGREE]
+06|M|No ERC2771/Votes/Multicall in actual IQCToken.sol (65 LOC only)|Trust-Model.md describes non-existent features
+
+[NEW]
+C|DEPLOY|pre_lock_mint_window|mint() callable by owner between deployment and lockMintingForever()|deploy then mint before lock call|fixed 1e9 supply invariant broken|unlimited inflation before lock; 1% genesis + 99% allocations diluted
+
+[NEW]
+C|TRUST|single_eoa_root|all contracts (Token + 7x Allocation + Registry) owned by same immutableqc.base.eth EOA at genesis|compromise of one EOA|complete system takeover|slash all stakes, drain allocations via release/recover, mint pre-lock
+
+[NEW]
+H|TRUST|allocation_rug_vector|TokenAllocation owners can release 100% immediately + recoverERC20 on non-IQC|owner controls all 7 allocations|economic extraction of 99% supply|no vesting/timelock; purpose strings are purely cosmetic
+
+[NEW]
+M|DOCS|spec_code_mismatch|Trust-Model.md claims ERC20Votes/ERC2771/Multicall but code has none|review based on outdated spec|audit surface understated|wasted review effort; false security assumptions
+
+[VEC]
+mint_inflation|owner mints before lockMintingForever|TOKEN:38-40 + IGNITION|1. deploy 2. mint arbitrary 3. lock|deployer EOA| C |high (window exists until explicit lock tx)
+
+[VEC]
+allocation_drain|release + recover on all 7 contracts|ALLOC:51-61,67-69|owner calls release(beneficiary, full) on each|single EOA compromise| C |high
+
+[FIX]
+NEW|C|call lockMintingForever() inside deployment transaction (Ignition or constructor)|eliminates pre-lock window|gas neutral
+
+[FIX]
+NEW|C|transfer all ownership to 4-of-7 multisig + timelock before any mainnet tx|removes single EOA root|requires signer coordination
+
+[FIX]
+NEW|H|add vesting schedule + timelock to TokenAllocation.release(); remove or restrict recoverERC20|prevents immediate rug|gas +4-6k per release
+
+[ARCH]
+ownership|single EOA at genesis|deploy directly to multisig + timelock|eliminates pre-lock and rug vectors|higher operational complexity; slower emergency response|yes
+
+[TEST]
+prelock_mint|deploy then call mint(1e18) before lock; assert totalSupply==1e9|mint window test|missing in IQCToken.test.js
+
+[TEST]
+allocation_immediate_release|deploy allocation, call release(full amount) in same block|rug test|no test for instant full release
+
+[DEPLOY]
+critical|IQCToken|pre-lock mint window allows supply inflation|make lockMintingForever() atomic in Ignition script before any mainnet
+
+[DEPLOY]
+critical|TokenAllocation x7|single EOA can release 99% supply instantly|transfer ownership to multisig + add vesting before deployment
+
+[SUMMARY]
+C:5|H:6|M:4|pre_lock_mint_window,single_eoa_root,excess_trap_1363|NO_GO|trust model reveals additional root-of-trust and pre-lock inflation vectors not covered in prior code-only review; spec/code mismatch compounds risk; do not proceed to mainnet

@@ -45,3 +45,7 @@ As of this update, the following have been archived with detailed summaries and 
 Earlier raw responses will continue to be added as they are extracted with maximum available detail from the conversation history.
 
 See individual round READMEs for more specific status.
+
+## Trust Model Specific Reviews
+
+A dedicated subfolder `trust-model-reviews/` now exists for external reviews focused specifically on the Trust Model document (separate from the main contract audit reviews).
