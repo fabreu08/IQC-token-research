@@ -1,38 +1,53 @@
 # IQC Token Research
 
-This repository documents the research and development work on the IQC (Immutable Quality Control) token, with a particular focus on security auditing methodology using multiple frontier AI models.
+**Multi-Model AI-Assisted Security Auditing Research**
 
-## Current Focus
+This repository serves as the primary home for research and documentation around the security auditing process for the IQC (Immutable Quality Control) token system, with a strong emphasis on exploring the emerging practice of using multiple frontier large language models for deep technical security reviews.
 
-### Multi-Model Security Audit Research
+## Research Focus
 
-We conducted an extensive, iterative security review of the IQC token contracts (`IQCToken`, `IQCRegistryV3`, and `TokenAllocation`) involving multiple large language models.
+The core of this work is an extensive, iterative security audit of the IQC smart contracts (`IQCToken`, `IQCRegistryV3`, and `TokenAllocation`) conducted through repeated engagement with multiple AI models.
 
-**Key artifacts from this research:**
+This project investigates several important questions:
 
-- [audit-synthesis/FINAL_SYNTHESIZED_AUDIT.md](./audit-synthesis/FINAL_SYNTHESIZED_AUDIT.md) — Final consolidated audit report
-- [audit-synthesis/MASTER_RISK_TABLE.md](./audit-synthesis/MASTER_RISK_TABLE.md) — Calibrated risk register with cross-model attribution
-- [audit-synthesis/AUDIT_EVOLUTION_SUMMARY.md](./audit-synthesis/AUDIT_EVOLUTION_SUMMARY.md) — Analysis of how findings and severity assessments evolved across successive reviews
+- How do different AI models vary in their ability to identify vulnerabilities, calibrate severity, and reason about complex architectural trade-offs?
+- What are the strengths and fundamental limitations of "multi-model consensus" approaches in security auditing?
+- How should we distinguish between genuine security vulnerabilities and tokenomics/credibility issues?
+- What methodological standards are required to make LLM-assisted audits credible and useful?
+- What is the gap between pure textual analysis by models and actual code execution, fuzzing, and formal verification?
 
-### Head-to-Head Model Discussions
+## Key Outputs
 
-- [head-to-head/opus-4.7-vs-kimi-2.5/](./head-to-head/opus-4.7-vs-kimi-2.5/) — Direct debate package between two of the most rigorous reviewers (Opus 4.7 and Kimi 2.5)
+### Synthesized Audit Reports
 
-## Research Themes
+- [audit-synthesis/FINAL_SYNTHESIZED_AUDIT.md](./audit-synthesis/FINAL_SYNTHESIZED_AUDIT.md) — The final consolidated security audit report
+- [audit-synthesis/MASTER_RISK_TABLE.md](./audit-synthesis/MASTER_RISK_TABLE.md) — Calibrated risk register with cross-model attribution and evolving severity assessments
+- [audit-synthesis/AUDIT_EVOLUTION_SUMMARY.md](./audit-synthesis/AUDIT_EVOLUTION_SUMMARY.md) — Analysis of how findings and risk ratings changed across successive model reviews
 
-This body of work explores several emerging questions in AI-assisted security auditing:
+### Head-to-Head Model Debates
 
-- How do different models vary in severity calibration?
-- What is the actual value (and limitations) of "multi-model consensus"?
-- How to distinguish real security vulnerabilities from tokenomics/credibility issues
-- The gap between textual analysis by LLMs and actual code execution / formal verification
-- Methodological standards for credible LLM-assisted security reviews
+- [head-to-head/opus-4.7-vs-kimi-2.5/](./head-to-head/opus-4.7-vs-kimi-2.5/) — Full discussion package from a direct debate between two of the most rigorous reviewers (Opus 4.7 and Kimi 2.5)
 
 ## Repository Structure
 
-- `/audit-synthesis/` — Final synthesized reports and risk tables
-- `/head-to-head/` — Direct discussion packages between specific models
-- (Future) `/iterations/` — Earlier raw model outputs and intermediate drafts (if archived)
+```
+.
+├── README.md
+├── audit-synthesis/                    # Final synthesized research outputs
+│   ├── FINAL_SYNTHESIZED_AUDIT.md
+│   ├── MASTER_RISK_TABLE.md
+│   └── AUDIT_EVOLUTION_SUMMARY.md
+├── head-to-head/                       # Direct model-to-model discussions
+│   └── opus-4.7-vs-kimi-2.5/
+├── raw-outputs/                        # Raw model responses (archived)
+│   └── README.md
+└── research/                           # Higher-level methodology papers
+    └── (in progress)
+```
+
+## Status
+
+This is an active research project. The current focus is on synthesizing lessons from the multi-model audit process and developing better frameworks for AI-assisted security auditing.
 
 ---
 
