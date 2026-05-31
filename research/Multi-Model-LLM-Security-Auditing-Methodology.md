@@ -1,98 +1,123 @@
 # Multi-Model LLM Security Auditing: Lessons from the IQC Token Review
 
 **Status**: Draft / Work in Progress  
-**Date**: June 2026
+**Date**: June 2026  
+**Version**: 0.2 (Expanded with head-to-head insights)
 
 ## Abstract
 
-This document reflects on a multi-month experiment in using multiple frontier large language models to perform security auditing of a production-intent smart contract system (the IQC token). We describe the process, analyze its strengths and serious limitations, and propose preliminary methodological principles for future work in this area.
+This document reflects on a multi-month experiment in using multiple frontier large language models to perform security auditing of a production-intent smart contract system (the IQC token). We describe the process, analyze its strengths and serious limitations — particularly those revealed through direct head-to-head debate between the strongest models — and propose preliminary methodological principles for future work in this area.
 
 ## 1. Motivation
 
-Traditional smart contract security auditing is expensive, slow, and dependent on a small number of highly specialized human experts. As AI capabilities have advanced, there has been growing interest in using large language models to assist with (or even partially automate) security review.
+Traditional smart contract security auditing is expensive, slow, and dependent on a small number of highly specialized human experts. As AI capabilities advanced, interest grew in using large language models to assist with (or partially automate) security review.
 
-Most early attempts involved feeding a model a codebase and asking it to find bugs. Results were mixed — models could surface known vulnerability patterns but frequently hallucinated issues, missed context-dependent problems, and lacked the ability to reason rigorously about economic incentives and system-level invariants.
+Most early attempts involved feeding a model a codebase and asking it to find bugs. Results were mixed. Models could surface known vulnerability patterns but frequently hallucinated issues, missed context-dependent problems, and lacked rigorous reasoning about economic incentives and system-level invariants.
 
-We hypothesized that **structured multi-model collaboration** — deliberately pitting different models against each other, iterating on their critiques, and synthesizing their outputs — might produce higher-quality results than any single model working in isolation.
+We hypothesized that **structured multi-model collaboration** — deliberately pitting different models against each other, iterating on their critiques, and synthesizing outputs — might produce higher-quality results than any single model in isolation.
 
-The IQC token project provided a real, high-stakes target on which to test this hypothesis.
+The IQC token project provided a real, high-stakes target on which to test this hypothesis over many rounds of review.
 
 ## 2. Process Overview
 
-Over several months, we collected reviews from multiple models (including multiple instances and prompting regimes of Grok 4.3, Claude Opus 4.7/4.8, and Kimi 2.5). The process evolved organically:
+Over several months, we collected reviews from multiple models (Grok 4.3 variants, Claude Opus 4.7/4.8, Kimi 2.5). The process evolved:
 
-- Initial broad reviews
+- Initial broad independent reviews
 - Sharing of previous model outputs as context
-- Iterative refinement of findings
+- Iterative refinement
 - Head-to-head debates between the strongest critics
-- Synthesis documents attempting to reconcile conflicting perspectives
+- Synthesis documents attempting to reconcile perspectives
 
-We produced three main classes of artifacts:
-- Individual model responses
-- Structured head-to-head discussion packages
-- Synthesized reports and risk tables
+We produced individual responses, structured head-to-head packages, and synthesized reports/risk tables.
 
 ## 3. Key Observations
 
 ### 3.1 Severity Calibration Varies Significantly
 
-Early models tended to produce more alarming severity ratings. Later models, when shown previous work and explicitly prompted toward skepticism, consistently downgraded many findings. This suggests that "consensus" across models is heavily influenced by prompting order and framing rather than independent convergence on truth.
+Early models produced more alarming severity ratings. Later models, shown prior work and prompted toward skepticism, consistently downgraded findings. "Consensus" across models is heavily influenced by prompting order and framing rather than independent convergence on truth.
 
 ### 3.2 The "Verification Gap" is Severe
 
-The single most consistent and damning critique across the strongest reviewers (particularly late-stage Opus 4.7 and Kimi 2.5) was that **no model in the entire process ever executed code, ran static analysis, or produced a working proof-of-concept**.
+The most consistent critique from the strongest reviewers (late-stage Opus 4.7 and Kimi 2.5) was that **no model in the entire process ever executed code, ran static analysis, or produced a working proof-of-concept**.
 
-All analysis was purely textual. This creates a fundamental ceiling on credibility. Models can reason about code they are shown, but they cannot discover what they were not shown, and they cannot validate their hypotheses against reality.
+All analysis was purely textual. This creates a fundamental ceiling on credibility.
 
 ### 3.3 Phantom Findings and Severity Theater
 
-Several findings that survived early rounds were later identified as likely non-issues or mis-categorized (most notably the "Burn Permission Feasibility Gap"). Once a finding is introduced by one model, subsequent models can be reluctant to fully dismiss it, creating a form of severity inflation through social dynamics in the review process.
+Several findings survived early rounds only to be later identified as non-issues or mis-categorized (most notably the "Burn Permission Feasibility Gap"). Once introduced, findings can persist due to reluctance to dismiss prior models' work. This creates "severity inflation through social dynamics."
 
-### 3.4 Trust Model is Foundational
+### 3.4 "Consensus Theater" and Correlated Reasoning
 
-A recurring theme was that many severity ratings were meaningless without an explicit trust model (who controls privileged roles, what capabilities they have, and what the threat model actually is). This is not a new insight in security, but it was striking how often it was under-specified even in relatively advanced AI-generated analysis.
+A major insight from the head-to-head phase: Treating outputs from multiple LLMs as "independent verification" is fundamentally misleading. Models share training data and reasoning patterns. What appears as "convergence" is often the result of sequential prompting and model agreeableness rather than robust, diverse analysis. Later models downgrading earlier ones reflects prompt engineering more than discovery of truth.
+
+### 3.5 The Lifecycle of Phantom Findings
+
+The Burn Permission Gap serves as a diagnostic case study:
+- Raised as a concern in one round.
+- Persisted through multiple iterations because subsequent models were hesitant to fully dismiss it.
+- Only in direct head-to-head debate did it become clear it was likely illusory (the Registry can burn from its own balance).
+
+This reveals a systemic bias in sequential LLM review toward *conserving* findings rather than rigorously re-evaluating them.
+
+### 3.6 Diminishing Returns Are Real and Severe
+
+Analysis of the full process suggests the first 2–3 models captured the majority of genuine signal. Subsequent rounds produced:
+- Diminishing new technical findings
+- Increasingly meta commentary about the process itself
+- Refinement of severity ratings (often downward)
+
+The marginal value of rounds 4–8 was primarily methodological hygiene rather than new security insights.
+
+### 3.7 Trust Model is Foundational
+
+Many severity ratings remained indeterminate without an explicit trust model (who controls `Ownable2Step`, what the actual threat model is). This is not new in security, but it was striking how often it was under-specified in AI-generated analysis.
+
+### 3.8 What LLMs Are Actually Good For
+
+Tooling excels at pattern detection. LLMs can be useful for **adversarial scenario generation** — narrative reasoning about complex interactions between subsystems that are hard to encode as invariants. However, these scenarios still require human judgment and actual verification to become credible findings.
 
 ## 4. Strengths of the Multi-Model Approach
 
-Despite its limitations, the process had genuine value:
-
-- **Diverse failure modes**: Different models caught different classes of issues.
-- **Pressure against inflation**: Later, more skeptical models served as an effective correction mechanism against overconfident early reviews.
-- **Head-to-head debates** surfaced higher-quality reasoning than solo reviews.
-- The process forced explicit documentation of reasoning that might otherwise have remained implicit.
+- Diverse failure modes across models
+- Effective correction mechanism against overconfidence via skeptical later reviewers
+- Head-to-head debate produced higher-quality reasoning than solo reviews
+- Forced explicit documentation of reasoning
 
 ## 5. Fundamental Limitations
 
-- **No ground truth**: Without execution, fuzzing, or formal verification, there is no reliable way to distinguish signal from sophisticated hallucination.
-- **Correlated blind spots**: All current frontier models share similar training data and architectural limitations.
-- **Prompt sensitivity**: Small changes in how previous work is presented dramatically affect later outputs.
-- **Lack of economic reasoning depth**: Models struggled with deeper cryptoeconomic and incentive questions compared to code-level bugs.
+- No ground truth without execution/fuzzing/formal verification
+- Correlated blind spots across models
+- High prompt sensitivity
+- Weak performance on deep economic/incentive reasoning compared to code-level bugs
+- Strong bias toward severity inflation and phantom finding persistence in sequential review
 
 ## 6. Proposed Methodological Principles
 
-Based on this experiment, we propose the following minimum standards for future multi-model LLM security work:
+Based on this experiment, we propose the following standards:
 
-1. **Tooling is non-negotiable**. Any claim above Medium severity should be accompanied by actual code execution (tests, fuzzing, static analysis).
-2. **Trust model first**. No severity rating should be assigned before the trust model is explicitly documented.
-3. **Findings must be deduplicated and categorized**. Separate security vulnerabilities from design debt, tokenomics issues, and process problems.
-4. **Acknowledge correlation**. Do not present multiple LLM reviews as "independent verification."
+1. **Tooling is non-negotiable** for anything above Medium severity.
+2. **Trust model first** — No severity rating without explicit documentation of privileged roles and threat model.
+3. **Findings must be deduplicated and properly categorized** (security vs. tokenomics vs. disclosure vs. process).
+4. **Acknowledge correlation** — Do not present multiple LLM reviews as independent verification.
 5. **Head-to-head debate has higher signal** than parallel independent reviews.
-6. **Human judgment remains central**. The most valuable contributions in this process came from synthesizing and critically evaluating model outputs, not from the raw outputs themselves.
+6. **Limit iteration** — Expect strongly diminishing returns after 3 models. Further rounds should target new attack scenarios, not re-litigation of existing findings.
+7. **Human judgment is the product**, not the raw model outputs.
+8. **Document the process failures** — Phantom findings and consensus theater should be treated as first-class research outputs.
 
 ## 7. Future Directions
 
-Promising areas for further research include:
-- Hybrid workflows that tightly integrate LLMs with actual verification tools (Foundry, Slither, Echidna, Halmos, etc.).
-- Structured debate formats between models with explicit scoring.
-- Using models to generate high-quality invariants and properties for formal verification, rather than trying to find bugs directly.
-- Longitudinal studies on how model performance on security tasks evolves over time.
+- Hybrid LLM + tooling workflows (models generate invariants and scenarios; tools verify)
+- Structured debate formats with explicit scoring
+- Using models primarily for property generation rather than bug finding
+- Controlled experiments measuring marginal value of additional models
+- Longitudinal studies as model capabilities evolve
 
 ## 8. Conclusion
 
-Multi-model LLM collaboration is a useful research and augmentation technique, but it is not yet (and may never be) a substitute for rigorous, tool-supported security engineering. The primary value we derived was not a dramatically more accurate list of bugs, but a much clearer understanding of where current AI systems are strong, where they are weak, and what methodological guardrails are required when working with them on high-stakes technical work.
+Multi-model LLM collaboration is a useful research and augmentation technique with real but narrow value. It is not a substitute for rigorous, tool-supported security engineering. The primary lasting contribution of this project is not a dramatically more accurate bug list, but a clearer map of where current AI systems are useful, where they are dangerous, and what methodological guardrails are required.
 
-The IQC audit process served as an excellent stress test for these ideas. Future work should focus on closing the verification gap rather than simply adding more models to the conversation.
+The IQC audit process was an excellent stress test. Future work should focus on closing the verification gap and treating the LLM review process itself as an object of study, rather than simply adding more models to the conversation.
 
 ---
 
-*This document is itself a living artifact and will be updated as the research continues.*
+*This document is a living artifact and will be updated as the research continues.*
