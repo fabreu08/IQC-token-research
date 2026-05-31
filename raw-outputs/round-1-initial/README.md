@@ -2,13 +2,14 @@
 
 This folder contains the first set of reviews where models were given the original audit materials with relatively little prior synthesis context.
 
-**Models in this round (to be populated):**
-- Grok 4.3 via Hermes
-- Opus 4.8
-- Others from early collection phase
+**Models in this round:**
 
-Files will be named in the format: `model-name-date.md` or similar for clarity.
+- `grok-4.3-hermes.md`
+- `opus-4.8.md`
+- `grok-4.3-web.md`
+
+These represent the first wave of independent reviews before significant synthesis context was provided.
 
 ---
 
-*Status: To be populated from conversation history.*
+*Status: Populated with available responses from conversation history.*
