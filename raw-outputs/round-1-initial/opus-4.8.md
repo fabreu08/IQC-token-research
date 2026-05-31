@@ -1,22 +1,41 @@
 # Opus 4.8 - Round 1 Initial Review
 
 **Model**: Opus 4.8
-**Round**: Initial independent review
-**Focus**: Strong economic and tokenomics lens
+**Round**: 1 - Initial Independent Reviews
+**Focus**: Economic and tokenomics lens (one of the strongest in this area)
+
+## Overview
+
+This review stood out early for its sharp focus on the gap between the project's economic claims and what the code actually does on-chain.
 
 ## Key Positions
 
-- Very strong emphasis on the fact that there is **no actual supply reduction** because all burns use `transfer(DEAD_ADDRESS)` instead of `_burn()`.
-- Argued that `totalSupply()` remains permanently fixed at 1e9.
-- Highlighted that this fundamentally breaks the "1 IQC burned per commitment" economic narrative.
-- Focused on the gap between marketing claims and on-chain reality.
+### Core Thesis
+The most important contribution was the strong, repeated emphasis that there is **no actual supply reduction** occurring:
 
-## Notable Characteristics
+- All "burns" (commit fees and slashes) use `iqcToken.transfer(DEAD_ADDRESS, amount)`.
+- This does **not** call `_burn()`, so `totalSupply()` never decreases from the initial 1 billion.
+- The narrative of "1 IQC permanently burned per commitment" is not technically true.
 
-This review was one of the first to sharply separate "security vulnerabilities" from "tokenomics misrepresentation." It pushed the synthesis to treat the supply reduction issue as more fundamental than many code-level bugs.
+Opus 4.8 argued this was more fundamental than many of the code-level bugs being discussed.
 
-Full original response available in the conversation history.
+### Other Notable Points
+- Highlighted the distinction between security vulnerabilities and tokenomics misrepresentation.
+- Was relatively early in calling out that the "burn" mechanism as implemented breaks the scarcity story the project wants to tell.
+
+## Evolution of This View
+
+Later in the process (in subsequent rounds), this perspective became even more influential. Multiple models eventually converged on the idea that the supply reduction issue is one of the most important problems, even if they disagreed on whether it should be labeled "Critical" from a pure security standpoint.
+
+Opus 4.7 later built on this line of thinking significantly.
+
+## Strengths of This Review
+
+- Forced the conversation to separate "does the code have bugs?" from "does the code deliver on the economic promises being made?"
+- This distinction became central to the final synthesized view.
 
 ---
 
-*Part of the IQC multi-model audit research archive.*
+**Full original response**: Available in the conversation history.
+
+*Archived as part of the IQC multi-model security audit research.*

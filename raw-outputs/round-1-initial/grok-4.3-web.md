@@ -1,21 +1,34 @@
 # Grok 4.3 Web - Round 1 Initial Review
 
 **Model**: Grok 4.3 (web version)
-**Round**: Initial independent review
-**Focus**: Governance and allocation/trust model
+**Round**: 1 - Initial Independent Reviews
+**Focus**: Governance, trust model, and allocation contracts
+
+## Overview
+
+This review brought important long-term and governance-oriented concerns that were somewhat under-represented in the very earliest reviews.
 
 ## Key Positions
 
-- Strong focus on the risk that `recoverERC20` in `TokenAllocation` contracts could allow the owner to drain IQC from purpose-bound allocations.
-- Highlighted the governance risk if ERC20Votes is enabled (tokens sent to DEAD address still counting toward total supply checkpoints and quorum).
-- Emphasized the need for a clear trust model before assigning severity to owner-controlled functions.
+### TokenAllocation recoverERC20 Risk
+One of the strongest early voices on the risk that the owner of the `TokenAllocation` contracts could use `recoverERC20` to drain IQC from the supposedly purpose-bound allocations. This directly undermines the transparency and credibility of the on-chain allocation model.
 
-## Notable Characteristics
+### ERC20Votes + DEAD Address
+Highlighted the governance risk if ERC20Votes is ever enabled: tokens sent to the DEAD address via "burns" would still count toward `getPastTotalSupply()` and could distort quorum calculations and voting power.
 
-This review was particularly valuable for surfacing trust model and long-term governance issues that other early reviews had under-weighted.
+### Trust Model Emphasis
+Repeatedly stressed that many severity ratings depend heavily on who actually controls `Ownable2Step` on the various contracts. Without a clear trust model, severity assignments are speculative.
 
-Full original response available in the conversation history.
+## Influence on Later Synthesis
+
+This review's concerns around allocation contracts and the need for an explicit trust model became major themes in the final synthesized documents, especially after Grok 4.3 web and later Kimi 2.5 reinforced them.
+
+## Style
+
+More measured and governance-focused compared to some of the more exploit-oriented early reviews.
 
 ---
 
-*Part of the IQC multi-model audit research archive.*
+**Full original response**: Available in the conversation history.
+
+*Archived as part of the IQC multi-model security audit research.*

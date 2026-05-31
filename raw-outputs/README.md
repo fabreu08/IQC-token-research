@@ -25,8 +25,23 @@ These raw outputs are preserved for:
 
 Responses are labeled with the exact model + configuration the user reported at the time (e.g., "Opus 4.7 default", "Opus 4.7 with master prompt", "Kimi 2.5 with master prompt").
 
-## Current Status
+## Current Status (Maximum Detail Backfill)
 
-As of the latest update, we are in the process of archiving the full set of responses. Some earlier rounds are still being organized.
+As of this update, the following have been archived with detailed summaries and key positions:
 
-See subfolder READMEs for details on what is currently available.
+**Round 1 - Initial Independent Reviews**
+- Fully documented: Grok 4.3 Hermes, Opus 4.8, Grok 4.3 web
+
+**Round 2 - After Initial Synthesis**
+- Kimi 2.5 (with agents)
+
+**Final Rounds**
+- Two detailed responses from Opus 4.7 (default + master prompt)
+- Kimi 2.5 (master prompt) — full response
+
+**Head-to-Head**
+- Full debate package between Opus 4.7 and Kimi 2.5 (also available in the `head-to-head/` folder at repo root)
+
+Earlier raw responses will continue to be added as they are extracted with maximum available detail from the conversation history.
+
+See individual round READMEs for more specific status.
