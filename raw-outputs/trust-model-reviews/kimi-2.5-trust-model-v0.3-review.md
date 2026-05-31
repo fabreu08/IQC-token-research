@@ -1,0 +1,195 @@
+# Kimi 2.5 Review — Trust Model v0.3 + Contract Hardening State
+
+**Model**: Kimi 2.5 (master prompt / high-rigor mode)
+**Date**: Latest review in the series
+**Subject**: Trust Model v0.3 + current state of contract hardening work
+
+---
+
+## Full Review
+
+[Full text of the user's provided Kimi review is archived below for completeness]
+
+I'll review this Trust Model document directly. No preamble, no validation.
+
+---
+
+## 1. The Adversary Table: Missing in Action
+
+**The document claims to have an "explicit adversary table with likelihood × impact" per the Review Notes. It doesn't.** Section 3.1 lists four adversary types with descriptions, but there's no actual matrix. No likelihood ratings. No impact ratings. No risk scoring.
+
+What exists is narrative description masquerading as structured analysis. "Compromised or Malicious Owner (Highest Risk)" — fine, but **highest relative to what?** Without quantified or at least ranked likelihood/impact for all four adversaries, this is just storytelling.
+
+**What should be there:**
+
+| Adversary | Likelihood | Impact | Risk Score | Mitigation Priority |
+|-----------|------------|--------|------------|---------------------|
+| Compromised Owner EOA | High (single key) | Critical (full control) | **Critical** | P0 |
+| Compromised Future Multisig | Low-Medium | Critical | **High** | P1 |
+| External Attacker (contract bug) | Unknown | Variable | **Unknown** | Requires separate analysis |
+| Slashing Abuse | Medium (if owner=slasher) | High | **High** | P1 |
+
+**Verdict**: The adversary analysis is incomplete. The Review Notes claim a table exists that doesn't. This is a documentation quality failure.
+
+---
+
+## 2. Phase 1 vs Phase 2: Concrete Enough? No.
+
+**Phase 1** says "Transfer Ownership to a Secure Multisig" and suggests "3-of-5 or 4-of-7." This is **insufficiently concrete for a pre-mainnet checklist.**
+
+**Missing specifics:**
+- **What addresses?** The document mentions `immutableqc.base.eth` as the genesis EOA. Is this the same entity that will control the multisig? Who are the signers?
+- **What threshold?** "3-of-5 or 4-of-7" is a range, not a decision.
+- **What timelock delay?** Not specified in Phase 1. Phase 2 mentions "48–72 hours" but that's a range, not a commitment.
+- **What happens between deployment and transfer?** The "atomic with deployment" recommendation for `lockMintingForever()` is good, but if that's not done, what's the maximum acceptable window?
+
+**Phase 2** is even looser: "Wrap the multisig in a timelock" — no mention of which timelock implementation (OpenZeppelin? Custom?), no mention of who can queue transactions, no mention of cancellation rights.
+
+**Concrete recommendation**: Replace the Phase 1/2 structure with a **decision checklist**:
+
+```
+Pre-Deployment Decisions Required:
+[ ] Multisig implementation: OpenZeppelin/___
+[ ] Signer set: [5 addresses with names/entities]
+[ ] Threshold: [3/5 or specific]
+[ ] Timelock delay: [48 hours or specific]
+[ ] Emergency pause mechanism: [Yes/No, implementation]
+[ ] Slashing governance: [Owner only / Timelocked / Separate process]
+```
+
+Without signer identities or at least entity types (e.g., "2 team members, 2 external advisors, 1 community representative"), this isn't a trust model. It's a trust model template.
+
+---
+
+## 3. Registry Slashing + TokenAllocation Interaction: Not Covered
+
+**This is a significant gap.** The document treats these as separate systems under the same owner, but doesn't analyze their **interaction**.
+
+**The actual risk**: A compromised owner could:
+1. Slash a user's entire stake in Registry
+2. Simultaneously release that user's allocation tokens (if the user is also a beneficiary)
+3. Effectively double-punish or create a race condition where the user loses stake before receiving allocation
+
+Or conversely:
+- Owner could front-run a legitimate slashing by releasing tokens to the slashing target, allowing them to unstake and escape punishment
+
+**The document's Section 2.3 mentions TokenAllocation capabilities but doesn't map them to Registry state.** Section 3.1 mentions slashing but doesn't connect it to allocation timing.
+
+**What's needed**: A section on "Cross-Contract Privilege Interactions" analyzing:
+- Can the same owner manipulate both systems simultaneously?
+- Are there atomicity requirements between slashing and allocation releases?
+- Should slashing be paused during allocation releases?
+
+This is absent. The document treats contracts as silos.
+
+---
+
+## 4. Impact on Audit Findings Table: Partially Wrong
+
+**The table has accuracy issues:**
+
+| Finding | Current Rating | Issue |
+|---------|---------------|-------|
+| `TokenAllocation.recoverERC20` | High → Low | Correct direction, but "Low" assumes timelock protects against *all* owner abuse. It doesn't. A timelocked multisig can still collude to drain. "Medium" is more honest. |
+| Pre-lock mint window | High → Medium | Wrong. If minting is locked at deployment (recommended), this becomes **Informational**. If not, it stays High regardless of timelock (timelock just delays the attack). |
+| Slashing power | High → Medium | Same issue. Governance process doesn't reduce severity unless it's *on-chain* governance. Off-chain governance with on-chain execution is still owner-equivalent. |
+| ERC1363 excess trap | High (UX) | Correctly marked as owner-independent, but severity is debatable. This is a UX footgun, not a security vulnerability in the protocol sense. |
+
+**More importantly**: The table is incomplete. It's missing:
+- **Trusted forwarder control**: Listed in the table but not in the main audit findings synthesis. Is this a real finding or documentation?
+- **Reentrancy concerns**: From the original audit. Owner-independent, should be in table.
+- **Burn permission gap**: Should be marked as "Removed / Not a finding" to show the audit evolution.
+
+**Verdict**: The table serves its purpose of showing trust model sensitivity, but the severity mappings are imprecise and the coverage is incomplete.
+
+---
+
+## 5. Single Biggest Weakness: The "EOA → Multisig" Handwave
+
+**The document treats "transfer to multisig" as a solution. It isn't.** It's a risk transfer, not a risk elimination.
+
+**The actual problem**: The document doesn't specify **who the multisig signers are or how they're selected.** A 3-of-5 multisig where all signers are team members with the same employer is **functionally equivalent** to a single EOA for many threat models (coercion, legal pressure, insider collusion).
+
+**What's missing**:
+- Geographic distribution requirements
+- Organizational diversity (team vs. investors vs. community vs. external)
+- Operational security expectations (hardware keys? air-gapped signing?)
+- Rotation policy (what happens when a signer leaves?)
+
+**The Review Notes mention**: "Include specific signer requirements or operational security expectations for the multisig." This is in the "Suggested Improvements" section. It should be in the **requirements** section. Without it, the Trust Model is incomplete.
+
+---
+
+## Additional Issues Not in Your Questions
+
+**A. The "Open Questions" Section is Too Passive**
+
+Section 6 lists four questions for the team. These aren't questions. They're **blockers.** The document should state:
+
+> "The following decisions must be made and documented before v1.0 publication. Until they are answered, this document is incomplete and cannot serve as a canonical reference."
+
+Current tone: "Here are some things to think about." Wrong tone.
+
+**B. No "What the Owner Cannot Do" Section**
+
+The Review Notes suggest this. It's not in the document. Critical omission. The document lists capabilities extensively but never states **invariants** — things that are structurally impossible regardless of owner malice.
+
+Examples:
+- Owner cannot un-mint tokens (burn is irreversible)
+- Owner cannot reduce total supply below burned amount
+- Owner cannot slash without emitting an event (observability)
+- Owner cannot change the allocation contract addresses post-deployment (immutable)
+
+These invariants are as important as capabilities for trust modeling.
+
+**C. Emergency Procedures Gap**
+
+Review Notes mention: "What happens if the controlling multisig is compromised or keys are lost?" The document is silent on this. No social recovery. No guardian process. No "break glass" mechanism.
+
+For a system controlling significant value, this is unacceptable. Even a sentence like "There is no recovery mechanism; loss of multisig is catastrophic" would be better than silence.
+
+---
+
+## Direct Answers to Your Specific Questions
+
+**1. Adversary table realistic and useful?**
+No. It's not a table, it's a list. No likelihood/impact scoring. Not useful for prioritization.
+
+**2. Phase 1/2 recommendations concrete?**
+No. Ranges instead of decisions. No signer identities. No implementation specifics.
+
+**3. Registry slashing + TokenAllocation interaction covered?**
+No. Significant gap. Cross-contract manipulation risks not analyzed.
+
+**4. Impact on Audit Findings table accurate?**
+Partially. Directionally correct but severity mappings imprecise. Missing several findings.
+
+**5. Single biggest weakness?**
+The multisig handwave — treating "transfer to multisig" as a solution without specifying signer diversity, operational security, or emergency procedures.
+
+---
+
+## What Would Make This Document Credible
+
+**Before v1.0 publication:**
+
+1. **Replace Phase 1/2 with a Decision Record** — specific addresses, thresholds, delays, signer entities
+2. **Add the missing adversary matrix** — actual likelihood × impact with justification
+3. **Add Cross-Contract Interactions section** — slashing + allocation timing risks
+4. **Add "What Owner Cannot Do"** — explicit invariants
+5. **Add Emergency Procedures** — or explicitly state "no recovery possible"
+6. **Answer the Open Questions** — or mark document as "Draft — Blocked on Team Decisions"
+
+**Current state**: This is a v0.2 working draft, as labeled. It is **not** ready to be "the canonical public reference that future audits, governance processes, and deployment decisions will reference."
+
+The structure is sound. The content is incomplete. The tone is appropriately cautious ("Do not deploy"), but the specificity required for action is missing.
+
+**Confidence**: High.
+
+---
+
+*End of archived Kimi 2.5 review on Trust Model v0.3 + contract hardening state.*
+
+*This response was provided after the user shared the current state of the Trust Model v0.3 and the hardened contracts.*
+
+*Archived as part of the IQC multi-model security audit research (Trust Model review series).*
