@@ -13,19 +13,22 @@ This package is designed to let them directly engage with each other's critiques
 
 ## Contents
 
-- `Head_to_Head_Prompt.md` — Main discussion prompt with specific tensions and questions
-- `FINAL_SYNTHESIZED_AUDIT.md` — Current best-effort final report
-- `MASTER_RISK_TABLE.md` — Calibrated risk table (updated with latest feedback)
-- `AUDIT_EVOLUTION_SUMMARY.md` — How findings evolved across all perspectives
-- `kimi-2.5-response.md` — Kimi 2.5's latest reply in the head-to-head (this file)
+- `Head_to_Head_Prompt.md` — Initial discussion prompt with specific tensions and questions
+- `FINAL_SYNTHESIZED_AUDIT.md`, `MASTER_RISK_TABLE.md`, `AUDIT_EVOLUTION_SUMMARY.md` — Supporting synthesis documents
+- `opus-4.7-response.md` — Opus 4.7's direct reply in the head-to-head
+- `kimi-2.5-response.md` — Kimi 2.5's direct reply in the head-to-head
 
-## Conversation Status
+## Conversation Flow (Head-to-Head)
 
-This is an active head-to-head discussion. The prompt was sent to both models. This response from Kimi 2.5 is the latest message in the dialogue.
+1. Initial prompt sent to both models (see `Head_to_Head_Prompt.md`)
+2. Opus 4.7 responded first (`opus-4.7-response.md`)
+3. Kimi 2.5 responded to Opus (`kimi-2.5-response.md`)
+
+This dialogue represents some of the deepest and most methodologically rigorous critique received during the entire multi-model audit process.
 
 ## Recommended Usage
 
-This package now contains both the initial prompt and the actual responses from the debate. It serves as a living record of the direct exchange between Opus 4.7 and Kimi 2.5 on the strengths, weaknesses, and methodological issues of the multi-model audit synthesis.
+This package now contains the actual back-and-forth of the debate. It is a living record of two of the strongest critics directly engaging each other's positions on the audit synthesis.
 
 ---
 
