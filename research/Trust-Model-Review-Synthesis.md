@@ -1,49 +1,66 @@
-# Trust Model Review Synthesis (Kimi 2.5 + Grok)
+# Trust Model Review Synthesis — Latest Round (Kimi 2.5 + Previous)
 
-**Date**: Latest reviews
-**Sources**: 
-- Kimi 2.5 detailed narrative review
-- Grok structured [AGREE]/[DISAGREE]/[NEW] review
+**Date**: Post Kimi v0.3 review
 
-This document captures the key convergent and divergent points from the two most recent dedicated reviews of the v0.2 Trust Model draft.
+This document synthesizes the key feedback from the most recent dedicated review of the Trust Model v0.3 (Kimi 2.5) along with prior input.
 
-## Areas of Strong Agreement
+## Major Themes from Kimi 2.5 Review
 
-- **Single EOA at genesis is a Critical root risk** (both models flag this heavily).
-- **Pre-lock mint window must be closed atomically** (both rate as Critical/High).
-- **Allocation contracts are currently too exposed** (both highlight immediate release + recoverERC20 as a major rug vector).
-- **"Transfer to multisig" is not a solution by itself** — needs signer identities, diversity, and operational security.
-- The document is still too vague on concrete decisions (thresholds, delays, signer entities).
-- Emergency / key loss procedures are missing and critical.
+### 1. Still Insufficient Specificity
+- Adversary matrix exists but lacks proper scoring and justification for likelihood ratings (especially future multisig scenarios).
+- Phase 1/2 recommendations continue to use ranges ("3-of-5 or 4-of-7", "48–72 hours") instead of firm decisions.
+- Signer identities / entity types are still missing.
 
-## Areas of Notable Feedback
+### 2. Missing Cross-Contract Analysis
+- Significant gap: No analysis of how Registry slashing power interacts with TokenAllocation release/recover capabilities under the same owner.
+- Examples: Owner could slash + simultaneously release to the same user, or front-run slashing via allocation releases.
 
-### Kimi 2.5
-- The adversary "table" is not a table — it's narrative. Needs actual scoring.
-- Missing analysis of **cross-contract privilege interactions** (slashing + allocation timing/race conditions).
-- The "Open Questions" section is too passive; these are blockers, not discussion points.
-- Strongly wants a "What the Owner Cannot Do" (invariants) section.
-- Calls out that the current table has imprecise severity mappings.
+### 3. The Document is Still Too Passive on Open Questions
+- The "Open Questions (Blockers)" section should be framed more forcefully as hard prerequisites for v1.0, not discussion items.
 
-### Grok
-- Points out a **spec/code mismatch** in the Trust Model document itself (it describes ERC20Votes / ERC2771 / Multicall features that are not present in the current 65-line GitHub main version of IQCToken).
-- Introduces new Critical items around the pre-lock window and single EOA root of trust across all contracts.
-- Good emphasis on testing (pre-lock mint test, immediate full release test).
+### 4. Missing Elements
+- No RACI matrix for privileged actions.
+- No explicit "What the Owner Cannot Do" (invariants) section (this was added in v0.3 — Kimi may have reviewed an earlier snapshot).
+- Emergency procedures still thin.
 
-## Recommended Immediate Updates to the Document
+### 5. Contract Hardening Assessment (Harsh but Fair)
+Kimi reviewed the actual current contract code and concluded that several advertised "hardening" items are not yet implemented:
 
-1. **Add a real adversary matrix** with Likelihood × Impact scoring (Kimi).
-2. **Add a "Cross-Contract Interactions" section** (Registry slashing + Allocation releases).
-3. **Add a "What the Owner Cannot Do" section** with explicit invariants.
-4. **Add Emergency Procedures** section (or explicitly state "no recovery possible").
-5. **Fix the spec/code mismatch** — either update the document to match current deployed code or note the advanced features as "planned/future".
-6. **Make Open Questions into Blockers** with clearer language.
-7. **Add concrete Decision Record format** instead of vague "Phase 1 / Phase 2" language (as suggested by Kimi).
+- **ERC1363 excess trap** is still present (`value >=` instead of `==`).
+- **No real vesting** has been added to TokenAllocation (still immediate full release possible).
+- **Registry still uses fake burns** (`transfer(DEAD)`) in some paths.
+- **Deployment module does not atomically call `lockMintingForever()`**.
 
-## Next Step Recommendation
+This creates a **spec/code mismatch** risk in the Trust Model document itself.
 
-Produce **v0.3** of the Trust Model that incorporates the above points, then circulate v0.3 for one more round of reviews before declaring it stable enough to be the canonical reference.
+## Synthesis with Prior Feedback
+
+This review reinforces and sharpens points previously raised by:
+- Opus 4.7 (phantom findings persistence, need for concrete decisions, process credibility)
+- Earlier Kimi rounds (trust model as prerequisite, severity inflation)
+
+**Convergent View Across Strongest Reviewers**:
+- The Trust Model v0.3 is a solid structural improvement over v0.2.
+- It is **not yet ready** to be treated as the canonical reference.
+- Contract hardening is lagging behind the narrative in the Trust Model and synthesis documents.
+- The biggest remaining risk is not any single bug, but the combination of:
+  - Still-undefined concrete trust model (signers, thresholds, timelocks)
+  - Gap between "what we say we hardened" and "what is actually in the code"
+
+## Recommended Immediate Actions
+
+1. **Produce v0.4** that:
+   - Replaces ranges with specific recommendations.
+   - Adds a real scored adversary matrix with assumptions stated.
+   - Adds Cross-Contract Risk section.
+   - Adds explicit invariants ("Owner cannot...").
+   - Adds RACI matrix.
+   - Clearly marks which contract changes are "Implemented", "In Progress", or "Planned".
+
+2. **Align the actual contracts** with the claims in the Trust Model before publishing v0.4 (especially ERC1363 exact fee, real burns everywhere, basic vesting in allocations, atomic lock in deployment).
+
+3. **Treat the Decision Record as the next deliverable**, not an afterthought.
 
 ---
 
-*Synthesis of the two latest dedicated Trust Model reviews.*
+*This synthesis incorporates the latest Kimi 2.5 review of v0.3.*
