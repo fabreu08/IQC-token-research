@@ -1,130 +1,173 @@
-# IQC Token System — Trust Model (v0.3)
+# IQC Token System — Trust Model (v0.4)
 
-**Status**: Draft (Incorporating external reviews)  
-**Version**: 0.3  
+**Status**: Draft (Incorporating latest Kimi 2.5 review)  
+**Version**: 0.4  
 **Date**: June 2026
 
-**Purpose**: This document defines the trust assumptions and threat model for the IQC token system. It is a required prerequisite for credible security analysis and mainnet deployment.
+**Purpose**: This document defines the trust assumptions, roles, and threat model for the IQC token system. It is the canonical reference for security analysis and deployment decisions.
 
 ---
 
-## 1. System Overview
+## 1. Executive Summary
 
-- **IQCToken**: ERC-20 with advanced features (ERC20Votes, Permit, ERC2771, Multicall, Burnable + tracking, ERC1363).
-- **IQCRegistryV3**: Staking, slashing, and data commitments.
-- **7 TokenAllocation contracts**: Purpose-bound escrows.
+The IQC system is currently controlled by a single EOA at genesis. This creates several high-severity risks that must be mitigated before mainnet.
 
-All use `Ownable2Step`.
+**Key Hardening Requirements (Pre-Mainnet):**
 
----
+- Transfer ownership of all contracts to a secure, diverse, timelocked multisig.
+- Close the pre-lock mint window atomically.
+- Implement real vesting with cliff on allocation contracts.
+- Move slashing toward governed processes over time.
+- Define and publish clear emergency procedures (or explicitly accept there are none).
 
-## 2. Current Ownership (Genesis)
-
-| Contract             | Owner (at launch)     | Key Privileges                          | Critical Window / Risk |
-|----------------------|-----------------------|-----------------------------------------|------------------------|
-| IQCToken             | Deploying EOA         | `mint()`, `lockMintingForever()`, `setTrustedForwarder()` | Pre-lock minting |
-| IQCRegistryV3        | Deploying EOA         | `slash()`                               | Arbitrary slashing |
-| TokenAllocation (x7) | Deploying EOA         | `release()`, `recoverERC20()`           | Immediate full release + recovery of non-IQC tokens |
-
-**Current state**: Single EOA (`immutableqc.base.eth`) is the root of trust for the entire system.
+Until the Decision Record below is completed with specific choices, this document remains a draft and cannot serve as the final canonical trust model.
 
 ---
 
-## 3. Threat Model
+## 2. Current Ownership at Genesis
+
+| Contract                  | Owner (at launch)      | Key Privileges                                      | Risk Level (Current) |
+|---------------------------|------------------------|-----------------------------------------------------|----------------------|
+| IQCToken                  | Deploying EOA          | `mint()`, `lockMintingForever()`, `setTrustedForwarder()` | Critical (pre-lock) |
+| IQCRegistryV3             | Deploying EOA          | `slash()`                                           | High |
+| TokenAllocation (7x)      | Deploying EOA          | `release()`, `recoverERC20()`                       | High (for 99% supply) |
+
+**Single point of failure**: One EOA controls minting, slashing, and release of nearly all supply.
+
+---
+
+## 3. Adversary Analysis
 
 ### 3.1 Adversary Matrix
 
-| Adversary                        | Likelihood     | Impact     | Overall Risk | Mitigation Priority |
-|----------------------------------|----------------|------------|--------------|---------------------|
-| Compromised / Malicious Deploying EOA | High (pre-hardening) | Critical | **Critical** | P0 |
-| Compromised Future Multisig      | Medium         | Critical   | **High**     | P1 |
-| External Attacker (via bugs)     | Medium         | High       | **High**     | Requires separate analysis |
-| Governance / Slashing Abuse      | Medium         | High       | **High**     | P1 |
+| Adversary                              | Likelihood                  | Impact     | Risk     | Priority |
+|----------------------------------------|-----------------------------|------------|----------|----------|
+| Compromised / Malicious Deploying EOA  | High (single key)           | Critical   | Critical | P0 |
+| Compromised Future Multisig            | Medium*                     | Critical   | High     | P1 |
+| External Attacker (via contract bugs)  | Medium                      | High       | High     | P1 |
+| Governance / Slashing Abuse            | Medium                      | High       | High     | P1 |
 
-### 3.2 Primary Risks (Current State)
+*Likelihood for future multisig assumes:
+- Minimum 4-of-7 threshold
+- Signers from at least 3 distinct organizations
+- At least 2 geographic regions
+- Hardware security module / air-gapped signing
 
-- Unlimited pre-lock minting.
-- Arbitrary slashing.
-- Ability to release 99% of supply immediately from allocations.
-- Ability to recover non-IQC tokens from allocations.
-- Control of the ERC2771 trusted forwarder.
+Lower diversity or weaker operational security increases this likelihood to **High**.
 
----
+### 3.2 Cross-Contract Risk (New in v0.4)
 
-## 4. Recommended Hardening Path
+A single compromised owner can interact with both the Registry and Allocation contracts in coordinated ways:
 
-### Phase 1 — Pre-Mainnet (Non-Negotiable)
+- Slash a user's stake in the Registry, then immediately release their allocation tokens (or vice versa).
+- Front-run a legitimate slashing event by releasing allocation tokens to the target first.
+- Use `recoverERC20` on allocations while simultaneously slashing in the Registry.
 
-1. **Close the pre-lock mint window** — Call `lockMintingForever()` atomically with deployment.
-2. **Transfer ownership** of all contracts to a secure multisig **before any mainnet activity**.
-3. **Add a timelock** (minimum 48–72 hours) on all privileged actions.
-4. **Strengthen Allocation Contracts** — Add vesting/timelocks to `release()` and restrict `recoverERC20` on the IQC token.
-
-### Phase 2 — Steady State
-
-- All owner actions go through a timelocked multisig.
-- Published governance process for slashing decisions.
-- Consider renouncing `IQCToken` ownership after minting is permanently locked.
+**Mitigation Direction**: Consider adding timelocks or governance requirements on slashing during allocation release windows, or explicit coordination rules.
 
 ---
 
-## 5. Impact on Audit Findings
+## 4. Recommended Hardening Path (v0.4)
 
-| Finding                                      | Severity (Single EOA) | Severity (Timelocked Multisig) | Notes |
-|----------------------------------------------|-----------------------|--------------------------------|-------|
-| Allocation `recoverERC20` / release abuse    | **Critical**          | **Medium**                     | One of the highest-impact findings |
-| Pre-lock mint window                         | **Critical**          | **Low** (if closed)            | Can and should be eliminated in code |
-| Arbitrary slashing                           | **High**              | **Medium**                     | Depends on governance process |
-| Trusted forwarder control                    | Medium                | Low                            | - |
-| ERC1363 excess trap                          | High (UX)             | High (UX)                      | Owner-independent |
+### Phase 1 — Pre-Mainnet (Mandatory)
+
+1. **Atomic Mint Lock**
+   - Call `lockMintingForever()` in the same transaction as deployment (or constructor).
+
+2. **Transfer to Secure Multisig + Timelock**
+   - Recommended concrete setup: 4-of-7 multisig with 48-hour minimum timelock.
+   - Signers must include diversity (team + external + community recommended).
+
+3. **Strengthen Allocation Contracts**
+   - Implement linear vesting + cliff (already partially done in code).
+   - Restrict or remove `recoverERC20` ability on the IQC token.
+
+4. **Emergency Pause**
+   - Add pausable functionality to Registry (already implemented).
+
+### Phase 2 — Post-Mainnet
+
+- Move slashing to a governed (ideally on-chain) process.
+- Add social recovery / guardian mechanisms or explicitly document that none exist.
+- Consider renouncing `IQCToken` ownership after minting is locked.
 
 ---
 
-## 6. Open Questions (Blockers)
+## 5. What the Owner Cannot Do (Invariants)
 
-The following decisions **must** be made and documented before this document can be considered the canonical reference:
+Regardless of who holds the keys:
 
-1. **Long-term ownership structure** — What is the target (specific multisig + timelock? On-chain governance?)?
-2. **Slashing governance** — Owner-only, timelocked, or separate on-chain process?
-3. **Allocation contract philosophy** — Long-term owner control or increasing autonomy?
-4. **Emergency / key loss procedures** — What is the recovery plan (social recovery, guardians, etc.)?
-5. **Signer requirements** — Geographic/organizational diversity, hardware security expectations, rotation policy?
-
-**Until these are answered, this document remains incomplete.**
-
----
-
-## 7. What the Owner Cannot Do (Invariants)
-
-Regardless of who controls the contracts, the following are structurally impossible:
-
-- Owner cannot un-burn tokens (burn is irreversible).
-- Owner cannot reduce `totalSupply` below the amount that has been genuinely burned.
-- Owner cannot change the addresses of the 7 allocation contracts after deployment.
+- Owner cannot un-burn tokens.
+- Owner cannot reduce `totalSupply` below the amount actually burned via `_burn()`.
+- Owner cannot change the 7 allocation contract addresses after deployment.
 - Owner cannot slash without emitting an on-chain event.
 
 ---
 
-## 8. Emergency Procedures
+## 6. Emergency Procedures
 
-**Current state (as of this draft)**: There is no documented emergency or social recovery procedure. Loss or compromise of the controlling multisig would be catastrophic with no clear recovery path.
+**Current Status**: No formal social recovery or "break glass" mechanism is defined.
 
-This must be addressed before mainnet.
-
----
-
-## 9. Recommendation
-
-**Do not deploy to mainnet** until:
-
-- A finalized version of this Trust Model is published.
-- Ownership is transferred to a secure, diverse, timelocked multisig.
-- The pre-lock mint window is closed.
-- Allocation contracts have stronger protections.
-- Emergency procedures are documented.
+**Decision Required**: The team must either:
+- Implement a documented social recovery / guardian process, **or**
+- Explicitly state in this document and all communications: "Loss or compromise of the controlling multisig is catastrophic with no recovery path."
 
 ---
 
-*This is a living document. It must be updated whenever ownership, roles, or threat assumptions change.*
+## 7. Decision Record (Required Before v1.0)
 
-**Version 0.3** — Incorporates feedback from Kimi 2.5 and Grok reviews on v0.2.
+This section must be completed with concrete decisions before this document can be treated as the canonical trust model.
+
+**Decision 1: Multisig Configuration**
+- Implementation: ____________________
+- Signers (names/entities): 
+  1. ____________________
+  2. ____________________
+  ...
+- Threshold: ____ of ____
+- Timelock delay: ____ hours
+
+**Decision 2: Slashing Governance**
+- [ ] Remains with timelocked multisig
+- [ ] Moves to separate on-chain process
+- Details: ____________________
+
+**Decision 3: Allocation Contract Long-term Model**
+- [ ] Keep owner-controlled with vesting + restricted recover
+- [ ] Move to more autonomous model over time
+- Details: ____________________
+
+**Decision 4: Emergency Procedures**
+- [ ] No recovery mechanism (catastrophic loss)
+- [ ] Social recovery / guardians (details below)
+- Details: ____________________
+
+**Decision 5: Renounce IQCToken Ownership?**
+- [ ] Yes, after `lockMintingForever()`
+- [ ] No
+
+---
+
+## 8. Impact on Audit Findings
+
+| Finding                                      | Single EOA Owner     | Timelocked Multisig | Notes |
+|----------------------------------------------|----------------------|---------------------|-------|
+| Allocation `recoverERC20` / immediate release| Critical             | Medium              | Highest sensitivity to trust model |
+| Pre-lock mint window                         | Critical             | Informational (if closed) | Should be eliminated in code |
+| Arbitrary slashing                           | High                 | Medium              | Depends on governance |
+| Trusted forwarder control                    | Medium               | Low                 | Currently disabled |
+| ERC1363 excess trap                          | High (UX)            | High (UX)           | Owner-independent |
+
+---
+
+## 9. Recommendations
+
+**Do not treat this document as final or publish v1.0 until** the Decision Record above is completed with specific, named decisions.
+
+The Trust Model process has successfully surfaced the real root risks. The remaining work is execution and documentation of concrete choices.
+
+---
+
+*Version 0.4 — Incorporates feedback from Kimi 2.5 v0.3 review and prior Opus 4.7 input.*
+
+**Next Step**: Team completes the Decision Record → Publish v1.0 → Reference in all future audits and deployment communications.
