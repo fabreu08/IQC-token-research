@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IQC Token White Paper v0.1</title>
+<style>
+
+:root { --fg:#111; --muted:#444; --border:#ccc; --bg:#fff; }
+* { box-sizing: border-box; }
+html { font-size: 16px; }
+body {
+  margin: 0 auto; max-width: 48rem; padding: 2rem 1.25rem 4rem;
+  font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  color: var(--fg); background: var(--bg); line-height: 1.55;
+}
+header { border-bottom: 2px solid var(--fg); padding-bottom: 1rem; margin-bottom: 2rem; }
+.kicker { text-transform: uppercase; letter-spacing: .08em; font-size: .75rem; color: var(--muted); margin: 0 0 .5rem; }
+h1 { font-size: 1.75rem; margin: 0 0 .5rem; font-weight: 650; }
+h2 { font-size: 1.2rem; margin: 2rem 0 .75rem; border-bottom: 1px solid var(--border); padding-bottom: .35rem; }
+h3 { font-size: 1rem; margin: 1.25rem 0 .5rem; }
+.meta { color: var(--muted); font-size: .9rem; margin: .15rem 0; }
+p, li { font-size: .95rem; }
+ul, ol { padding-left: 1.25rem; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 1rem 0; }
+th, td { border: 1px solid var(--border); padding: .4rem .5rem; text-align: left; vertical-align: top; }
+th { background: #f4f4f4; }
+code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .86em; }
+a { color: #0645ad; }
+footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
+@media print {
+  body { max-width: none; padding: 0; font-size: 11pt; }
+  a { color: inherit; text-decoration: none; }
+  header { break-after: avoid; }
+  table, section { break-inside: avoid; }
+  h2 { break-after: avoid; }
+}
+
+</style>
+</head>
+<body>
+
+<header>
+  <p class="kicker">Immutable Quality Control</p>
+  <h1>IQC Token White Paper</h1>
+  <p class="meta">Optional token infrastructure · Version 0.1 (research draft) · 2026-09-08</p>
+  <p class="meta">Network intent: Base (Sepolia for test) · Contracts not mainnet-deployed</p>
+</header>
+
+<section>
+  <h2>0. Disclaimer</h2>
+  <p>This document is <strong>not</strong> an offer to sell securities or any other financial instrument. It is <strong>not</strong> legal, tax, or investment advice. Nothing herein is a promise of profit, listing, liquidity, or token price.</p>
+  <p>Smart contracts in <code>fabreu08/iqc-token</code> have been subject to <strong>multi-model AI-assisted review</strong> archived in <code>fabreu08/IQC-token-research/audit-synthesis/</code>. They have <strong>not</strong> been audited by an independent professional security firm unless a later revision says otherwise. AI-only review is not a substitute for a firm audit.</p>
+  <p>Laboratory customers may use Immutable QC software <strong>without</strong> acquiring or using IQC tokens.</p>
+</section>
+
+<section>
+  <h2>1. Problem</h2>
+  <p>Laboratories generate measurement data treated as evidence. Integrity failures are often gaps in who measured what, when, on which instrument, and whether the record was altered afterward.</p>
+  <p>Immutable QC is laboratory middleware: sign measurements at the instrument, hash-chain an audit trail, and publish Merkle roots. Product: <a href="https://immutableqc.com">immutableqc.com</a> · Open Alpha <a href="https://immutableqc.com/dashboard/">dashboard</a>.</p>
+  <p>The token is not the product. The product is the integrity workflow.</p>
+</section>
+
+<section>
+  <h2>2. Why a token at all</h2>
+  <h3>Steelman</h3>
+  <ul>
+    <li><strong>Spam resistance:</strong> burned fee per on-chain QC commit (<code>COMMIT_FEE = 1 IQC</code> in <code>IQCRegistryV3</code>).</li>
+    <li><strong>Atomic pay + commit:</strong> ERC-1363 <code>transferAndCall</code> with payload (DESIGN.md).</li>
+    <li><strong>Transparent escrow:</strong> purpose-labeled <code>TokenAllocation</code> contracts for 99% of supply.</li>
+    <li><strong>Governance readiness:</strong> ERC20Votes checkpoints (capability ≠ live DAO).</li>
+    <li><strong>Sound-money constraints:</strong> reject fee-on-transfer and core-token blacklist/freeze.</li>
+  </ul>
+  <h3>Case against</h3>
+  <ul>
+    <li>Product works without IQC (Open Alpha).</li>
+    <li>Public float invites securities-analysis risk (not legal advice).</li>
+    <li>Liquidity and unlock shocks.</li>
+    <li>AI audit ≠ firm audit.</li>
+    <li>Ticker + lab logo without demand = <strong>memecoin</strong> residual case.</li>
+  </ul>
+  <p><strong>Position:</strong> optional infrastructure. Prefer WAIT on public listing until real lab registry use (see launch strategy).</p>
+</section>
+
+<section>
+  <h2>3. Why Base</h2>
+  <ul>
+    <li>EVM stack matches Hardhat/OpenZeppelin contracts.</li>
+    <li>Low fees for repeated instrument/gateway txs (Permit / ERC-2771 paths).</li>
+    <li>Coinbase-affiliated L2 on-ramps are infrastructure, not an endorsement of IQC.</li>
+    <li>Base no-code launchers (Zora, Clanker, Flaunch, Mint Club) are not the recommended IQC distribution channel.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>4. Token design</h2>
+  <table>
+    <thead><tr><th>Parameter</th><th>Value</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Ticker</td><td>IQC</td><td>README</td></tr>
+      <tr><td>Standard</td><td>ERC-20 + extensions</td><td>Permit, Votes, ERC1363, ERC2771, Ownable2Step, Multicall, burn</td></tr>
+      <tr><td>Chain</td><td>Base / Sepolia</td><td>Not mainnet-deployed in this draft</td></tr>
+      <tr><td>Supply</td><td>1,000,000,000 fixed</td><td>Genesis mint + lockMintingForever</td></tr>
+      <tr><td>Genesis</td><td>10,000,000 (1%)</td><td>immutableqc.base.eth</td></tr>
+      <tr><td>Escrowed</td><td>990,000,000 (99%)</td><td>7 TokenAllocation contracts</td></tr>
+      <tr><td>Non-features</td><td>No fee-on-transfer; no core blacklist/freeze</td><td>MONEY_CHARACTERISTICS_ANALYSIS.md</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>5. Utility — LIVE / DESIGNED / FUTURE</h2>
+  <table>
+    <thead><tr><th>Mechanism</th><th>Status</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Burn 1 IQC per stake-path commit</td><td>LIVE</td><td>IQCRegistryV3._commit</td></tr>
+      <tr><td>ERC1363 exact-fee pay+commit</td><td>LIVE</td><td>value must equal COMMIT_FEE</td></tr>
+      <tr><td>Stake / unstake</td><td>LIVE</td><td>Registry balances</td></tr>
+      <tr><td>Owner slash → burn</td><td>LIVE</td><td>Privileged</td></tr>
+      <tr><td>Pause registry</td><td>LIVE</td><td>Owner</td></tr>
+      <tr><td>Permit / meta-tx / multicall</td><td>LIVE</td><td>Token UX</td></tr>
+      <tr><td>Votes checkpoints</td><td>LIVE (capability)</td><td>Not a shipped DAO</td></tr>
+      <tr><td>Marketplace / variable fees</td><td>FUTURE</td><td>DESIGN.md open questions</td></tr>
+      <tr><td>Mandatory token for all product paths</td><td>FUTURE / choice</td><td>Merkle product path can omit token</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>6. Tokenomics and unlock/vest</h2>
+  <table>
+    <thead><tr><th>Allocation</th><th>Amount</th><th>%</th></tr></thead>
+    <tbody>
+      <tr><td>Genesis (immutableqc.base.eth)</td><td>10,000,000</td><td>1%</td></tr>
+      <tr><td>Community &amp; Staking Rewards</td><td>250,000,000</td><td>25%</td></tr>
+      <tr><td>Liquidity &amp; Market Making</td><td>200,000,000</td><td>20%</td></tr>
+      <tr><td>Team &amp; Advisors</td><td>150,000,000</td><td>15%</td></tr>
+      <tr><td>Treasury &amp; Operations</td><td>150,000,000</td><td>15%</td></tr>
+      <tr><td>Ecosystem &amp; Partnerships</td><td>100,000,000</td><td>10%</td></tr>
+      <tr><td>Early Contributors &amp; Incentives</td><td>100,000,000</td><td>10%</td></tr>
+      <tr><td>Reserved for Future Use</td><td>40,000,000</td><td>4%</td></tr>
+      <tr><td><strong>Total</strong></td><td><strong>1,000,000,000</strong></td><td><strong>100%</strong></td></tr>
+    </tbody>
+  </table>
+  <p><strong>Unlock/vest:</strong> Solidity supports cliff + linear vest. The Ignition module fetched 2026-09-08 does not pass <code>vestingDuration</code> / <code>cliffDuration</code> (constructor arity mismatch). Unlock dates are <em>unspecified</em> — this paper does not invent a calendar pie chart. See <code>issues/TOKENALLOCATION_CONSTRUCTOR_MISMATCH.md</code>.</p>
+</section>
+
+<section>
+  <h2>7. Registry / Merkle vs the token</h2>
+  <ol>
+    <li><strong>Product integrity path</strong> — signatures, hash-chain, Merkle roots. Can run without a public token.</li>
+    <li><strong>On-chain registry</strong> — stake, slash, <code>QCPacketCommitted</code>, fee burns when that deployment is used.</li>
+    <li><strong>Token</strong> — ERC-20 + extensions and allocation escrows.</li>
+  </ol>
+  <p>Merkle publication ≠ mandatory IQC purchase.</p>
+</section>
+
+<section>
+  <h2>8. Governance</h2>
+  <p>ERC20Votes enables checkpoints and delegation. It does not ship a DAO, proposal module, or automatic transfer of Ownable rights to holders. Slash/pause/release remain privileged until moved to timelock/multisig/governed process (Trust Model intent).</p>
+</section>
+
+<section>
+  <h2>9. Risks</h2>
+  <ul>
+    <li>Contract bugs; AI-only audit gap; privileged owner functions.</li>
+    <li>Thin or unlocked liquidity; allocation unlock shocks.</li>
+    <li>Regulatory treatment of public distributions (obtain counsel).</li>
+    <li>Product-without-token is valid — weak float demand.</li>
+    <li>Memecoin residual if speculation detaches from lab usage.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>10. Roadmap (checkable)</h2>
+  <table>
+    <thead><tr><th>Step</th><th>Exit criterion</th></tr></thead>
+    <tbody>
+      <tr><td>Sepolia integration</td><td>Token + registry tests; sample commits</td></tr>
+      <tr><td>Fix allocation deploy params</td><td>Ignition matches ABI; vest/cliff published</td></tr>
+      <tr><td>First lab commit</td><td>Design-partner lab commits in real workflow</td></tr>
+      <tr><td>Firm audit path</td><td>Vendor engaged or report published</td></tr>
+      <tr><td>Lock mint on deploy</td><td>lockMintingForever executed</td></tr>
+      <tr><td>Counsel review</td><td>Advice on any public distribution/LP plan</td></tr>
+      <tr><td>Liquidity (only if GO)</td><td>Aerodrome/Uniswap POL + published locker</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>11. References</h2>
+  <ol>
+    <li>iqc-token DESIGN.md, MONEY_CHARACTERISTICS_ANALYSIS.md, DEPLOYMENT_GUIDE.md, README</li>
+    <li>Contracts: IQCToken.sol, IQCRegistryV3.sol, TokenAllocation.sol</li>
+    <li>IQC-token-research audit-synthesis/</li>
+    <li>launch/LAUNCH_STRATEGY.md</li>
+    <li>https://immutableqc.com</li>
+  </ol>
+</section>
+
+<footer>
+  <p>End of white paper v0.1 · Product first. Token second.</p>
+</footer>
+
+</body>
+</html>
