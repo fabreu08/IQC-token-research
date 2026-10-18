@@ -33,6 +33,8 @@ Do not replace audit-research framing; this addendum only links launch + whitepa
 
 ### Launch & whitepaper (research artifacts)
 
+> **Shelved 2026-10-17:** the launch strategy and white paper below are shelved under Immutable QC's no-patented-work rule (no blockchain, token, registry or network anchoring). They stay here as a historical record only. Do not cite them as current plans.
+
 Alongside the primary **audit-research** outputs (`audit-synthesis/` and related notes), this tree includes decision-grade documentation for the **optional** IQC token. The Immutable QC product (Open Alpha) does **not** require IQC; laboratory middleware—sign at instrument, hash-chain audit trail, Merkle roots—remains the focus. Registry on-chain commitments are **not** the same as the product Merkle audit trail.
 
 - **Launch strategy (decision: WAIT):** [`launch/LAUNCH_STRATEGY.md`](launch/LAUNCH_STRATEGY.md) — compares liquidity-first Base (Aerodrome / Uniswap v3), social memepads (drop as primary), Virtuals, PinkSale/DxSale, Echo/Legion, and “don’t launch yet.” Primary recommendation: **WAIT** until firm-audit/FV path, real lab registry use, TokenAllocation vest fix, and counsel review. If/when GO: Aerodrome liquidity-first (POL); fallback Echo/Legion with counsel. No mainnet day-1 plan.

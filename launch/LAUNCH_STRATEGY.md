@@ -1,3 +1,5 @@
+> **SHELVED (2026-10-17). Do not cite.** Immutable QC follows a no-patented-work rule (see `docs/patent-guardrails.md` in `fabreu08/immutableqc-website`). That rule takes the blockchain path off the table: no token, no on-chain registry, no network anchoring and no smart contracts. This document is kept unchanged below as a historical research record. It is not a current plan, recommendation or product description.
+
 # IQC Token — Launch Strategy
 
 **Status:** Decision draft for `fabreu08/IQC-token-research`  
